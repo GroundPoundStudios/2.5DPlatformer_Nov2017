@@ -2,15 +2,18 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerInteraction))]
 public class PlayerMovement : MonoBehaviour {
 
 	public float speed = 5f;
 	public float jumpForce = 10f;
 	public float groundDetectionLengthFromCenter = 1.1f;
 	public int maxJumpCharges = 1;
-	public int jumpCharges;
+	private int jumpCharges;
 	public float jumpRechargeTimer = 0.5f;
 	private bool canJump = true;
+
+	private PlayerInteraction playerInteraction;
 	private Rigidbody2D rgdPlayer;
 	// for later
 	private Animator animPlayer;
@@ -18,6 +21,7 @@ public class PlayerMovement : MonoBehaviour {
 	// Use this for initialization
 	void Start () 
 	{
+		playerInteraction = GetComponent<PlayerInteraction> ();
 		rgdPlayer = GetComponent<Rigidbody2D> ();
 	}
 	
@@ -25,7 +29,7 @@ public class PlayerMovement : MonoBehaviour {
 	void Update () 
 	{
 		//Left + Right movement in one.
-		if(Input.GetButton("Horizontal"))
+		if(Input.GetButton("Horizontal") && !playerInteraction.interacting)
 		{
 			rgdPlayer.velocity = new Vector2 (Input.GetAxisRaw("Horizontal") * speed, rgdPlayer.velocity.y);
 		}
@@ -37,7 +41,7 @@ public class PlayerMovement : MonoBehaviour {
 		}
 
 		//everything to do with jumping below.
-		if(Input.GetButtonDown("Vertical") && Input.GetAxis("Vertical") > 0 && jumpCharges > 0 || Input.GetButtonDown("Jump") && jumpCharges > 0)
+		if(Input.GetButtonDown("Vertical") && Input.GetAxis("Vertical") > 0 && jumpCharges > 0 && !playerInteraction.interacting || Input.GetButtonDown("Jump") && jumpCharges > 0 && !playerInteraction.interacting)
 		{
 			//rgdPlayer.AddForce (Vector2.up * jumpForce, ForceMode2D.Impulse);
 			rgdPlayer.velocity += Vector2.up * jumpForce;
@@ -60,6 +64,13 @@ public class PlayerMovement : MonoBehaviour {
 					jumpCharges = maxJumpCharges;
 				}
 			}
+		}
+
+		//clamp acceleration when hitting a edge at high speed 
+		//change this later.
+		if(rgdPlayer.velocity.y > jumpForce)
+		{
+			rgdPlayer.velocity = new Vector2 (rgdPlayer.velocity.x, jumpForce);
 		}
 	}
 
